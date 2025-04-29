@@ -2,7 +2,6 @@ package cloud_config
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"sync"
@@ -11,11 +10,9 @@ import (
 	"gorm.io/gorm"
 )
 
-type cloudConfig map[string]string
-
 var (
 	db         *gorm.DB
-	configMap  = make(map[string]cloudConfig)
+	configMap  = make(map[string]map[string]string)
 	configLock sync.RWMutex
 	namespace  string
 )
@@ -25,7 +22,7 @@ func Init(configDB *gorm.DB, configNamespace string) {
 	namespace = configNamespace
 	// Check if the table exists. If it doesn't exist, create it.
 	if !db.Migrator().HasTable(&CloudConfig{}) {
-		if err := db.Migrator().CreateTable(&CloudConfig{}); err != nil {
+		if err := db.Debug().Migrator().CreateTable(&CloudConfig{}); err != nil {
 			log.Fatalf("Failed to create cloud_configs table: %v", err)
 		}
 		log.Println("cloud_configs table created")
@@ -37,7 +34,7 @@ func Init(configDB *gorm.DB, configNamespace string) {
 
 func loadConfigFromDB() {
 	var configs []CloudConfig
-	result := db.Where("deleted_at IS NULL AND namespace=?", namespace).Find(&configs)
+	result := db.Where("namespace=?", namespace).Find(&configs)
 	if result.Error != nil {
 		log.Fatalf("Failed to query cloud_configs table: %v", result.Error)
 	}
@@ -94,13 +91,11 @@ func SaveConfig(key, name, data, description string) error {
 	// Check if the config already exists
 	var existingConfig CloudConfig
 	cfgModel := &CloudConfig{}
-	existErr := db.Where("namespace = ? and config_key = ?", namespace, key).First(&existingConfig)
-	if existErr != nil {
-		if errors.Is(existErr.Error, gorm.ErrRecordNotFound) {
-			cfgModel.Id = existingConfig.Id
-		} else {
-			return existErr.Error
-		}
+	existErr := db.Where("namespace = ? and config_key = ?", namespace, key).First(&existingConfig).Error
+	if existErr != nil && existErr != gorm.ErrRecordNotFound {
+		return existErr
+	} else {
+		cfgModel.Id = existingConfig.Id
 	}
 
 	cfgModel.ConfigKey = key
@@ -109,25 +104,22 @@ func SaveConfig(key, name, data, description string) error {
 	cfgModel.ConfigName = name
 	cfgModel.Description = description
 
-	result := db.Model(&CloudConfig{}).Save(cfgModel)
+	result := db.Save(cfgModel)
 	if result.Error != nil {
 		return result.Error
 	}
 
 	configMap[key] = cfg
+	fmt.Printf("=======configMap: %+v\n", configMap)
 	return nil
 }
 
-func RemoveConfig(namespace, key string) {
+func RemoveConfig(key string) {
 	configLock.Lock()
 	defer configLock.Unlock()
 
 	// Soft delete config
-	cfgModel := &CloudConfig{}
-	cfgModel.Namespace = namespace
-	cfgModel.ConfigKey = key
-	cfgModel.DeletedAt = time.Now()
-	result := db.Model(&CloudConfig{}).Save(&cfgModel)
+	result := db.Where("namespace = ? AND config_key = ?", namespace, key).Delete(&CloudConfig{})
 	if result.Error != nil {
 		log.Fatalf("Failed to delete config in the database: %v", result.Error)
 	}
