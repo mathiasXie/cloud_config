@@ -51,8 +51,6 @@ func loadConfigFromDB() {
 		}
 		configMap[config.ConfigKey] = cfg
 	}
-
-	log.Printf("Loaded %d cloud configs from the database", len(configMap))
 }
 
 func refreshConfig() {
