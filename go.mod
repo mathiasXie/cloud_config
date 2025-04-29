@@ -1,6 +1,6 @@
 module github.com/mathiasXie/cloud_config
 
-go 1.24.1
+go 1.20.1
 
 require gorm.io/gorm v1.26.0
 
