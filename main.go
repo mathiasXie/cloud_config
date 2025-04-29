@@ -110,7 +110,6 @@ func SaveConfig(key, name, data, description string) error {
 	}
 
 	configMap[key] = cfg
-	fmt.Printf("=======configMap: %+v\n", configMap)
 	return nil
 }
 
