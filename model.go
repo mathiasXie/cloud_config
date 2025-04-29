@@ -10,7 +10,8 @@ func (CloudConfig) TableName() string {
 
 type CloudConfig struct {
 	Id          int32     `gorm:"column:id;primary_key" json:"id"`
-	ConfigKey   string    `gorm:"column:config_key;uniqueIndex:uni_config_key" json:"config_key"`
+	Namespace   string    `gorm:"column:namespace;index:idx_namespace_config_key,unique" json:"namespace"`
+	ConfigKey   string    `gorm:"column:config_key;index:idx_namespace_config_key,unique" json:"config_key"`
 	ConfigName  string    `gorm:"column:config_name" json:"config_name"`
 	ConfigValue string    `gorm:"column:config_value" json:"config_value"`
 	Description string    `gorm:"column:description" json:"description"`

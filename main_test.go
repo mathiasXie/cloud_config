@@ -15,7 +15,7 @@ func TestInit(t *testing.T) {
 	}
 
 	// Call Init to initialize the database and start the refreshConfig goroutine
-	Init(db)
+	Init(db, "test_namespace")
 
 	err = SaveConfig("server", "web server config", "{\"host\":\"localhost\"}", "web server config host,port and other config")
 	if err != nil {

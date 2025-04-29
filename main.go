@@ -17,11 +17,12 @@ var (
 	db         *gorm.DB
 	configMap  = make(map[string]cloudConfig)
 	configLock sync.RWMutex
+	namespace  string
 )
 
-func Init(configDB *gorm.DB) {
+func Init(configDB *gorm.DB, configNamespace string) {
 	db = configDB
-
+	namespace = configNamespace
 	// Check if the table exists. If it doesn't exist, create it.
 	if !db.Migrator().HasTable(&CloudConfig{}) {
 		if err := db.Migrator().CreateTable(&CloudConfig{}); err != nil {
@@ -36,7 +37,7 @@ func Init(configDB *gorm.DB) {
 
 func loadConfigFromDB() {
 	var configs []CloudConfig
-	result := db.Where("deleted_at IS NULL").Find(&configs)
+	result := db.Where("deleted_at IS NULL AND namespace=?", namespace).Find(&configs)
 	if result.Error != nil {
 		log.Fatalf("Failed to query cloud_configs table: %v", result.Error)
 	}
@@ -93,7 +94,7 @@ func SaveConfig(key, name, data, description string) error {
 	// Check if the config already exists
 	var existingConfig CloudConfig
 	cfgModel := &CloudConfig{}
-	existErr := db.Where("config_key = ?", key).First(&existingConfig)
+	existErr := db.Where("namespace = ? and config_key = ?", namespace, key).First(&existingConfig)
 	if existErr != nil {
 		if errors.Is(existErr.Error, gorm.ErrRecordNotFound) {
 			cfgModel.Id = existingConfig.Id
@@ -103,6 +104,7 @@ func SaveConfig(key, name, data, description string) error {
 	}
 
 	cfgModel.ConfigKey = key
+	cfgModel.Namespace = namespace
 	cfgModel.ConfigValue = data
 	cfgModel.ConfigName = name
 	cfgModel.Description = description
@@ -116,12 +118,13 @@ func SaveConfig(key, name, data, description string) error {
 	return nil
 }
 
-func RemoveConfig(key string) {
+func RemoveConfig(namespace, key string) {
 	configLock.Lock()
 	defer configLock.Unlock()
 
 	// Soft delete config
 	cfgModel := &CloudConfig{}
+	cfgModel.Namespace = namespace
 	cfgModel.ConfigKey = key
 	cfgModel.DeleteAt = time.Now()
 	result := db.Model(&CloudConfig{}).Save(&cfgModel)
