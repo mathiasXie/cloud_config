@@ -16,7 +16,7 @@ type CloudConfig struct {
 	ConfigValue string    `gorm:"column:config_value" json:"config_value"`
 	Description string    `gorm:"column:description" json:"description"`
 	CreatedAt   time.Time `gorm:"column:created_at" json:"created_at"`
-	DeleteAt    time.Time `gorm:"column:delete_at" json:"delete_at"`
+	DeletedAt   time.Time `gorm:"column:deleted_at" json:"deleted_at"`
 	UpdatedAt   time.Time `gorm:"column:updated_at" json:"updated_at"`
 }
 

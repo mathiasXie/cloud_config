@@ -126,7 +126,7 @@ func RemoveConfig(namespace, key string) {
 	cfgModel := &CloudConfig{}
 	cfgModel.Namespace = namespace
 	cfgModel.ConfigKey = key
-	cfgModel.DeleteAt = time.Now()
+	cfgModel.DeletedAt = time.Now()
 	result := db.Model(&CloudConfig{}).Save(&cfgModel)
 	if result.Error != nil {
 		log.Fatalf("Failed to delete config in the database: %v", result.Error)
