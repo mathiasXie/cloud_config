@@ -25,6 +25,4 @@ func TestInit(t *testing.T) {
 	if host != "localhost" {
 		t.Errorf("Expected host to be 'localhost', got '%s'", host)
 	}
-	for {
-	}
 }
