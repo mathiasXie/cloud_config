@@ -2,6 +2,7 @@ package cloud_config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"sync"
@@ -78,7 +79,7 @@ func GetConfig(key string) map[string]string {
 	return config
 }
 
-func SaveConfig(key string, data string) error {
+func SaveConfig(key, name, data, description string) error {
 	configLock.Lock()
 	defer configLock.Unlock()
 
@@ -89,9 +90,23 @@ func SaveConfig(key string, data string) error {
 		return err
 	}
 
+	// Check if the config already exists
+	var existingConfig CloudConfig
 	cfgModel := &CloudConfig{}
+	existErr := db.Where("config_key = ?", key).First(&existingConfig)
+	if existErr != nil {
+		if errors.Is(existErr.Error, gorm.ErrRecordNotFound) {
+			cfgModel.Id = existingConfig.Id
+		} else {
+			return existErr.Error
+		}
+	}
+
 	cfgModel.ConfigKey = key
 	cfgModel.ConfigValue = data
+	cfgModel.ConfigName = name
+	cfgModel.Description = description
+
 	result := db.Model(&CloudConfig{}).Save(cfgModel)
 	if result.Error != nil {
 		return result.Error
