@@ -15,7 +15,7 @@ type Config struct {
 	Operator    string          `gorm:"column:operator;type:varchar(180)" json:"operator"`
 	CreatedAt   *time.Time      `gorm:"column:created_at;type:timestamp;default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt   *time.Time      `gorm:"column:updated_at;type:timestamp;default:CURRENT_TIMESTAMP" json:"updated_at"`
-	DeletedAt   *gorm.DeletedAt `gorm:"column:deleted_at;type:timestamp;" json:"deleted_at"`
+	DeletedAt   *gorm.DeletedAt `gorm:"column:deleted_at;type:timestamp;default:NULL" json:"deleted_at"`
 	Version     Version         `gorm:"foreignKey:ConfigID;references:Id;constraint:OnDelete:CASCADE;" json:"versions"`
 }
 
@@ -32,7 +32,7 @@ type Version struct {
 	Operator    string          `gorm:"column:operator;type:varchar(180)" json:"operator"`
 	CreatedAt   *time.Time      `gorm:"column:created_at;type:timestamp;default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt   *time.Time      `gorm:"column:updated_at;type:timestamp;default:CURRENT_TIMESTAMP" json:"updated_at"`
-	DeletedAt   *gorm.DeletedAt `gorm:"column:deleted_at;type:timestamp;" json:"deleted_at"`
+	DeletedAt   *gorm.DeletedAt `gorm:"column:deleted_at;type:timestamp;default:NULL" json:"deleted_at"`
 }
 
 func (Version) TableName() string {
